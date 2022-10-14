@@ -1,3 +1,4 @@
+import { link } from "fs";
 import qs from "qs";
 import { Publication } from "../Types";
 
@@ -9,7 +10,7 @@ export async function getPublications(
   options?: RequestOptions
 ): Promise<Publication[]> {
   const query = qs.stringify(options, {
-    encodeValuesOnly: true,
+    encodeValuesOnly: true
   });
 
   const { data } = await AxiosInstance.get(`${PUBLICATIONS_ROUTE}?${query}`);
@@ -19,6 +20,7 @@ export async function getPublications(
       title?: string;
       description?: string;
       date?: string;
+      link?: string;
     };
   }[];
 
@@ -27,6 +29,7 @@ export async function getPublications(
     title: publication.attributes.title,
     description: publication.attributes.description,
     date: publication.attributes.date,
+    link: publication.attributes.link
   }));
 }
 

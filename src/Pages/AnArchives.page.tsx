@@ -1,56 +1,22 @@
 import React from "react";
-import { useSearchParams } from "react-router-dom";
 import { FilterMenu } from "../Components/FilterMenu";
 import { PageLayout } from "../Components/PageLayout";
 import { AnArchivePreview } from "../Components/Previews/AnArchive.preview";
+import {
+  makeUrlWithSortAndFilterParams,
+  parameterToOrderMap,
+  SortParameter,
+  useSortAndFilterParams
+} from "../Hooks/useSortAndFilterParams";
 import { useAnArchivesQuery } from "../ReactQuery/anArchives.queries";
 import { useAnArchiveTypesQuery } from "../ReactQuery/anArchiveTypes.queries";
 import { FRONT_END_ROUTES, getRoute } from "../Routes";
 
-enum SortParameter {
-  date = "date",
-  title = "title"
-}
-
-enum SortOrder {
-  desc = "desc",
-  asc = "asc"
-}
-
-const parameterToOrderMap = {
-  [SortParameter.date]: SortOrder.desc,
-  [SortParameter.title]: SortOrder.asc
-};
-
-function makeAnArchiveUrl({
-  typeId,
-  sortParameter
-}: {
-  typeId?: string;
-  sortParameter?: SortParameter;
-}) {
-  let queryString = "";
-  if (typeId) {
-    queryString += `type=${typeId}&`;
-  }
-
-  if (sortParameter) {
-    queryString += `sortParameter=${sortParameter}&`;
-  }
-
-  return `${getRoute(FRONT_END_ROUTES.anArchives)}?${queryString}`;
-}
-
 export function AnArchivesPage(): React.ReactElement {
-  const [searchParams] = useSearchParams();
-  const activeType = searchParams.get("type") || undefined;
-  const sortParameter =
-    (searchParams.get("sortParameter") as SortParameter) || SortParameter.title;
-
-  const activeUrl = makeAnArchiveUrl({
-    typeId: activeType,
-    sortParameter: sortParameter
-  });
+  const rootRoute = FRONT_END_ROUTES.anArchives;
+  const { activeSortParameter, activeType, activeUrl } = useSortAndFilterParams(
+    { rootRoute }
+  );
 
   const { data: anAchiveTypes } = useAnArchiveTypesQuery();
 
@@ -63,7 +29,7 @@ export function AnArchivesPage(): React.ReactElement {
         }
       : {}),
     sort: {
-      [sortParameter]: parameterToOrderMap[sortParameter]
+      [activeSortParameter]: parameterToOrderMap[activeSortParameter]
     }
   });
 
@@ -77,15 +43,17 @@ export function AnArchivesPage(): React.ReactElement {
               menuItems={[
                 {
                   label: "Tout",
-                  to: makeAnArchiveUrl({
-                    sortParameter
+                  to: makeUrlWithSortAndFilterParams({
+                    sortParameter: activeSortParameter,
+                    rootRoute
                   })
                 },
                 ...anAchiveTypes.map((type) => ({
                   label: type.name || "",
-                  to: makeAnArchiveUrl({
+                  to: makeUrlWithSortAndFilterParams({
                     typeId: type.id,
-                    sortParameter
+                    sortParameter: activeSortParameter,
+                    rootRoute
                   })
                 }))
               ]}
@@ -99,16 +67,18 @@ export function AnArchivesPage(): React.ReactElement {
             menuItems={[
               {
                 label: "Titre",
-                to: makeAnArchiveUrl({
+                to: makeUrlWithSortAndFilterParams({
                   typeId: activeType,
-                  sortParameter: SortParameter.title
+                  sortParameter: SortParameter.title,
+                  rootRoute
                 })
               },
               {
                 label: "Année",
-                to: makeAnArchiveUrl({
+                to: makeUrlWithSortAndFilterParams({
                   typeId: activeType,
-                  sortParameter: SortParameter.date
+                  sortParameter: SortParameter.date,
+                  rootRoute
                 })
               }
             ]}

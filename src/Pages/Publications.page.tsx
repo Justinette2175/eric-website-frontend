@@ -1,56 +1,22 @@
 import React from "react";
-import { useSearchParams } from "react-router-dom";
 import { FilterMenu } from "../Components/FilterMenu";
 import { PageLayout } from "../Components/PageLayout";
-import { AnArchivePreview } from "../Components/Previews/AnArchive.preview";
 import { PublicationPreview } from "../Components/Previews/Publication.preview";
+import {
+  makeUrlWithSortAndFilterParams,
+  parameterToOrderMap,
+  SortParameter,
+  useSortAndFilterParams
+} from "../Hooks/useSortAndFilterParams";
 import { usePublicationsQuery } from "../ReactQuery/publications.queries";
 import { usePublicationTypesQuery } from "../ReactQuery/publicationTypes.queries";
-import { FRONT_END_ROUTES, getRoute } from "../Routes";
+import { FRONT_END_ROUTES } from "../Routes";
 
-enum SortParameter {
-  date = "date",
-  title = "title"
-}
-
-enum SortOrder {
-  desc = "desc",
-  asc = "asc"
-}
-
-const parameterToOrderMap = {
-  [SortParameter.date]: SortOrder.desc,
-  [SortParameter.title]: SortOrder.asc
-};
-
-function makePublicationUrl({
-  typeId,
-  sortParameter
-}: {
-  typeId?: string;
-  sortParameter?: SortParameter;
-}) {
-  let queryString = "";
-  if (typeId) {
-    queryString += `type=${typeId}&`;
-  }
-
-  if (sortParameter) {
-    queryString += `sortParameter=${sortParameter}&`;
-  }
-
-  return `${getRoute(FRONT_END_ROUTES.publications)}?${queryString}`;
-}
 export function PublicationsPage(): React.ReactElement {
-  const [searchParams] = useSearchParams();
-  const activeType = searchParams.get("type") || undefined;
-  const sortParameter =
-    (searchParams.get("sortParameter") as SortParameter) || SortParameter.title;
-
-  const activeUrl = makePublicationUrl({
-    typeId: activeType,
-    sortParameter: sortParameter
-  });
+  const rootRoute = FRONT_END_ROUTES.publications;
+  const { activeSortParameter, activeType, activeUrl } = useSortAndFilterParams(
+    { rootRoute }
+  );
 
   const { data: publicationTypes } = usePublicationTypesQuery();
 
@@ -63,7 +29,7 @@ export function PublicationsPage(): React.ReactElement {
         }
       : {}),
     sort: {
-      [sortParameter]: parameterToOrderMap[sortParameter]
+      [activeSortParameter]: parameterToOrderMap[activeSortParameter]
     }
   });
 
@@ -77,15 +43,17 @@ export function PublicationsPage(): React.ReactElement {
               menuItems={[
                 {
                   label: "Tout",
-                  to: makePublicationUrl({
-                    sortParameter
+                  to: makeUrlWithSortAndFilterParams({
+                    sortParameter: activeSortParameter,
+                    rootRoute
                   })
                 },
                 ...publicationTypes.map((type) => ({
                   label: type.name || "",
-                  to: makePublicationUrl({
+                  to: makeUrlWithSortAndFilterParams({
                     typeId: type.id,
-                    sortParameter
+                    sortParameter: activeSortParameter,
+                    rootRoute
                   })
                 }))
               ]}
@@ -99,16 +67,18 @@ export function PublicationsPage(): React.ReactElement {
             menuItems={[
               {
                 label: "Titre",
-                to: makePublicationUrl({
+                to: makeUrlWithSortAndFilterParams({
                   typeId: activeType,
-                  sortParameter: SortParameter.title
+                  sortParameter: SortParameter.title,
+                  rootRoute
                 })
               },
               {
                 label: "Année",
-                to: makePublicationUrl({
+                to: makeUrlWithSortAndFilterParams({
                   typeId: activeType,
-                  sortParameter: SortParameter.date
+                  sortParameter: SortParameter.date,
+                  rootRoute
                 })
               }
             ]}

@@ -7,5 +7,8 @@ import { QueryId } from "./queryId";
 export function usePressesQuery(
   options?: RequestOptions
 ): UseQueryResult<Presse[]> {
-  return useQuery([QueryId.presses], async () => await getPresses(options));
+  return useQuery(
+    [QueryId.presses, JSON.stringify(options).replaceAll('"', "")],
+    async () => await getPresses(options)
+  );
 }
